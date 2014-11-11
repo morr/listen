@@ -196,7 +196,7 @@ module Listen
       options = [mq: self, directories: directories]
 
       @supervisor = Celluloid::SupervisionGroup.run!(registry)
-      supervisor.add(Record, as: :record, args: self)
+      supervisor.add(Record, as: :record, args: [self, @silencer])
       supervisor.pool(Change, as: :change_pool, args: self)
 
       # TODO: broadcaster should be a separate plugin

@@ -7,8 +7,9 @@ module Listen
     # TODO: deprecate
     attr_accessor :paths, :listener
 
-    def initialize(listener)
+    def initialize(listener, silencer)
       @listener = listener
+      @silencer = silencer
       @paths    = _auto_hash
     end
 
@@ -107,6 +108,7 @@ module Listen
 
       while !left.empty?
         dirname = left.pop
+        next if @silencer.silenced?(dirname, :directory)
         add_dir(root, dirname)
 
         path = ::File.join(root, dirname)
