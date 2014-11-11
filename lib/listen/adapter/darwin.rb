@@ -10,6 +10,7 @@ module Listen
 
       private
 
+      # NOTE: each directory gets a DIFFERENT callback!
       def _configure(dir, &callback)
         require 'rb-fsevent'
         opts = { latency: options.latency }
@@ -20,8 +21,24 @@ module Listen
         end
       end
 
+      # NOTE: _run is called within a thread, so run every other
+      # worker in it's own thread
       def _run
-        @workers.pop.run while !@workers.empty?
+        return if @workers.empty?
+
+        first = @workers.pop
+        while !@workers.empty?
+          Thread.new do
+            begin
+              @workers.pop.run
+            rescue
+              _log :error, "run() in extra thread(s) failed: #{$!}:#{$@ * "\n"}"
+            end
+          end
+        end
+
+        # Continue in normal thread
+        first.run
       end
 
       def _process_event(dir, event)
